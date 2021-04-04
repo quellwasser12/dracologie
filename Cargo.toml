@@ -1,0 +1,16 @@
+[package]
+name = "dracologie"
+version = "0.1.0"
+authors = ["Sire Quellwasser <quellwasser@hotmail.com>"]
+edition = "2018"
+
+
+[dependencies]
+hdwallet = "0.3.0"
+rand = "0.8.3"
+hex = "0.4.3"
+bitcoin_hashes = "0.9.4"
+structopt = "0.3.21"
+bitcoincash = "0.25.2"
+bit-vec = "0.6.3"
+colored = "2"

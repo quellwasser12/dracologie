@@ -1,0 +1,27 @@
+#+title: Readme
+#+author: Hashdragons.io
+
+
+* Build
+
+  This requires Rust nightly build:
+
+
+  #+begin_src bash
+rustup install nightly
+cargo +nightly install racer
+  #+end_src
+
+
+* Running
+
+
+  #+begin_src bash
+cargo +nightly run describe d4dbdf4ce229faec3ee296515c7b432966efc7f3d13ce7dd9364651ad0d625d9
+  #+end_src
+
+
+  Example:
+
+
+  [[./images/example.png]]
