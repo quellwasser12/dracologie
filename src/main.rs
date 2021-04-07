@@ -1,3 +1,4 @@
+#![feature(exclusive_range_pattern)]
 mod keyinfo;
 mod describe;
 
