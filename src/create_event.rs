@@ -67,14 +67,122 @@ impl fmt::Display for DragonseedEvent {
     }
 }
 
-pub fn create(event: Event, hashdragon: String, cost:u64, hex:bool) {
+struct HatchEvent {
+    cost: u64,
+    hashdragon: String,
+    input_index: u32,
+    output_index: u32,
+    hex: bool
+}
 
+impl fmt::Display for HatchEvent {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+
+        if self.hex {
+            write!(f, "{:02x}{:02x}{:02x}{}{}{:016x}{}",
+                   OP_RETURN_CODE,
+                   LOKAD_ID,
+                   0xd1,
+                   hex::encode(self.input_index.to_le_bytes()),
+                   hex::encode(self.output_index.to_le_bytes()),
+                   self.cost,
+                   self.hashdragon)
+        } else {
+            write!(f, "OP_RETURN 0x{:02x} 0x{:02x} {} {} {:016x} {}",
+                   LOKAD_ID,
+                   0xd1,
+                   hex::encode(self.input_index.to_le_bytes()),
+                   hex::encode(self.output_index.to_le_bytes()),
+                   self.cost,
+                   self.hashdragon)
+        }
+    }
+}
+
+struct WanderEvent {
+    hashdragon: String,
+    input_index: u32,
+    output_index: u32,
+    txn_ref: String,
+    hex: bool
+}
+
+
+impl fmt::Display for WanderEvent {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        if self.hex {
+            write!(f, "{:02x}{:02x}{:02x}{}{}{}",
+                   OP_RETURN_CODE,
+                   LOKAD_ID,
+                   0xd2,
+                   hex::encode(self.input_index.to_le_bytes()),
+                   hex::encode(self.output_index.to_le_bytes()),
+                   self.hashdragon)
+        } else {
+            write!(f, "OP_RETURN 0x{:02x} 0x{:02x} {} {} {}",
+                   LOKAD_ID,
+                   0xd2,
+                   hex::encode(self.input_index.to_le_bytes()),
+                   hex::encode(self.output_index.to_le_bytes()),
+                   self.hashdragon)
+        }
+    }
+}
+
+
+struct HibernateEvent {
+    hashdragon: String,
+    input_index: u32,
+    output_index: u32,
+    hex: bool
+}
+
+
+impl fmt::Display for HibernateEvent {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        if self.hex {
+            write!(f, "{:02x}{:02x}{:02x}{}{}{}",
+                   OP_RETURN_CODE,
+                   LOKAD_ID,
+                   0xd3,
+                   hex::encode(self.input_index.to_le_bytes()),
+                   hex::encode(self.output_index.to_le_bytes()),
+                   self.hashdragon)
+        } else {
+            write!(f, "OP_RETURN 0x{:02x} 0x{:02x} {} {} {}",
+                   LOKAD_ID,
+                   0xd3,
+                   hex::encode(self.input_index.to_le_bytes()),
+                   hex::encode(self.output_index.to_le_bytes()),
+                   self.hashdragon)
+        }
+    }
+}
+
+
+
+pub fn create(event: Event, hashdragon: String, cost:u64, txn_ref: String, hex:bool) {
     let output = match event {
-        Dragonseed => { DragonseedEvent { cost: cost,
-                                          hashdragon: hashdragon,
-                                          input_index: 1 as u32,
-                                          output_index: 1 as u32,
-                                          hex: hex}.to_string() }
+        Event::Dragonseed => { DragonseedEvent { cost: cost,
+                                                 hashdragon: hashdragon,
+                                                 input_index: 1 as u32,
+                                                 output_index: 1 as u32,
+                                                 hex: hex}.to_string() },
+        Event::Hatch => { HatchEvent { cost: cost,
+                                       hashdragon: hashdragon,
+                                       input_index: 1 as u32,
+                                       output_index: 1 as u32,
+                                       hex: hex }.to_string() },
+        Event::Wander => { WanderEvent { hashdragon: hashdragon,
+                                         input_index: 1 as u32,
+                                         output_index: 1 as u32,
+                                         txn_ref: txn_ref,
+                                         hex: hex }.to_string() },
+        Event::Hibernate => { HibernateEvent { hashdragon: hashdragon,
+                                               input_index: 1 as u32,
+                                               output_index: 1 as u32,
+                                               hex: hex }.to_string() },
+        _ => panic!("Unsupported Event: {:?}", event)
     };
 
     println!("{}", output);

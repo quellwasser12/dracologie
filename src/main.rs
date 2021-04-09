@@ -28,9 +28,12 @@ enum Command {
     CreateEvent {
         event: create_event::Event,
         hashdragon: String,
-        cost: u64,
         #[structopt(name = "hex", long = "hex")]
-        hex: bool // Flag to indicate whether to display
+        hex: bool, // Flag to indicate whether to display
+        #[structopt(name = "cost", long, required_if("event", "dragonseed"))]
+        cost: Option<u64>,
+        #[structopt(name="txn-ref", long, required_if("event", "wander"))]
+        txn_ref: Option<String>
     }
 }
 
@@ -49,6 +52,16 @@ fn main() {
             }
             return;
         },
-        Command::CreateEvent { event, hashdragon, cost, hex } => create_event::create(event, hashdragon, cost, hex)
+        Command::CreateEvent { event, hashdragon, cost, txn_ref, hex } => {
+            let cost_value = match cost {
+                Some(c) => c,
+                None => 0
+            };
+            let txn_ref_value = match txn_ref {
+                Some(reference) => reference,
+                None => "".to_string()
+            };
+            create_event::create(event, hashdragon, cost_value, txn_ref_value, hex)
+        }
     };
 }

@@ -31,10 +31,12 @@ cargo +nightly run describe d4dbdf4ce229faec3ee296515c7b432966efc7f3d13ce7dd9364
 
 ** Create Event Script
 
+    For now input and output indices are assumed to be 1.  Use =--hex=
+    option to display script as hex.
+
 *** Dragonseed
 
-    Create script for the dragonseed, for now input and output indices
-    are assumed to be 1.  Use =--hex= option to display script as hex.
+    Create script for the dragonseed.
 
     #+begin_src
 ./target/debug/dracologie create-event dragonseed <hashdragon> <cost_in_satoshi> [--hex]
@@ -50,4 +52,62 @@ cargo +nightly run describe d4dbdf4ce229faec3ee296515c7b432966efc7f3d13ce7dd9364
     #+begin_src bash
       ./target/debug/dracologie create-event dragonseed d499c366617faf06e23dd7d5a89291eadeccc5a79ac7cdca3a174ed5a7f858f0 12000 --hex
 OP_RETURN 0xd101d400 0xd0 01000000 01000000 0000000000002ee0 d499c366617faf06e23dd7d5a89291eadeccc5a79ac7cdca3a174ed5a7f858f0
+    #+end_src
+
+*** Hatch
+
+    Create script for hatching.
+
+./target/debug/dracologie create-event hatch <hashdragon> <cost_in_satoshi> [--hex]
+    #+end_src
+
+    Example:
+
+    #+begin_src bash
+      ./target/debug/dracologie create-event hatch d499c366617faf06e23dd7d5a89291eadeccc5a79ac7cdca3a174ed5a7f858f0 12000 --hex
+6ad101d400d101000000010000000000000000002ee0d499c366617faf06e23dd7d5a89291eadeccc5a79ac7cdca3a174ed5a7f858f0
+    #+end_src
+
+    #+begin_src bash
+      ./target/debug/dracologie create-event hatch d499c366617faf06e23dd7d5a89291eadeccc5a79ac7cdca3a174ed5a7f858f0 12000 --hex
+OP_RETURN 0xd101d400 0xd1 01000000 01000000 0000000000002ee0 d499c366617faf06e23dd7d5a89291eadeccc5a79ac7cdca3a174ed5a7f858f0
+    #+end_src
+
+*** Wander
+
+    Create script for wandering.
+
+./target/debug/dracologie create-event wander <hashdragon> [<txn_ref>] [--hex]
+    #+end_src
+
+    Example:
+
+    #+begin_src bash
+      ./target/debug/dracologie create-event wander d499c366617faf06e23dd7d5a89291eadeccc5a79ac7cdca3a174ed5a7f858f0 fcf5a12c7a85271e8726f0bb53d683335fe84d9c683ec5d0f038114951a2863d --hex
+6ad101d400d201000000010000000000000000002ee0d499c366617faf06e23dd7d5a89291eadeccc5a79ac7cdca3a174ed5a7f858f0
+    #+end_src
+
+    #+begin_src bash
+      ./target/debug/dracologie create-event wander d499c366617faf06e23dd7d5a89291eadeccc5a79ac7cdca3a174ed5a7f858f0 fcf5a12c7a85271e8726f0bb53d683335fe84d9c683ec5d0f038114951a2863d --hex
+OP_RETURN 0xd101d400 0xd2 01000000 01000000 0000000000002ee0 d499c366617faf06e23dd7d5a89291eadeccc5a79ac7cdca3a174ed5a7f858f0
+    #+end_src
+
+
+*** Hibernate
+
+    Create script for hibernating.
+
+./target/debug/dracologie create-event hibernate <hashdragon> [--hex]
+    #+end_src
+
+    Example:
+
+    #+begin_src bash
+      ./target/debug/dracologie create-event hibernate d499c366617faf06e23dd7d5a89291eadeccc5a79ac7cdca3a174ed5a7f858f0 --hex
+6ad101d400d301000000010000000000000000002ee0d499c366617faf06e23dd7d5a89291eadeccc5a79ac7cdca3a174ed5a7f858f0
+    #+end_src
+
+    #+begin_src bash
+      ./target/debug/dracologie create-event hibernate d499c366617faf06e23dd7d5a89291eadeccc5a79ac7cdca3a174ed5a7f858f0 --hex
+OP_RETURN 0xd101d400 0xd3 01000000 01000000 0000000000002ee0 d499c366617faf06e23dd7d5a89291eadeccc5a79ac7cdca3a174ed5a7f858f0
     #+end_src
