@@ -15,6 +15,8 @@ cargo +nightly install racer
 
 * Running
 
+** Describe your Hashdragon
+
 
   #+begin_src bash
 cargo +nightly run describe d4dbdf4ce229faec3ee296515c7b432966efc7f3d13ce7dd9364651ad0d625d9
@@ -25,3 +27,27 @@ cargo +nightly run describe d4dbdf4ce229faec3ee296515c7b432966efc7f3d13ce7dd9364
 
 
   [[./images/example.png]]
+
+
+** Create Event Script
+
+*** Dragonseed
+
+    Create script for the dragonseed, for now input and output indices
+    are assumed to be 1.  Use =--hex= option to display script as hex.
+
+    #+begin_src
+./target/debug/dracologie create-event dragonseed <hashdragon> <cost_in_satoshi> [--hex]
+    #+end_src
+
+    Example:
+
+    #+begin_src bash
+      ./target/debug/dracologie create-event dragonseed d499c366617faf06e23dd7d5a89291eadeccc5a79ac7cdca3a174ed5a7f858f0 12000 --hex
+6ad101d400d001000000010000000000000000002ee0d499c366617faf06e23dd7d5a89291eadeccc5a79ac7cdca3a174ed5a7f858f0
+    #+end_src
+
+    #+begin_src bash
+      ./target/debug/dracologie create-event dragonseed d499c366617faf06e23dd7d5a89291eadeccc5a79ac7cdca3a174ed5a7f858f0 12000 --hex
+OP_RETURN 0xd101d400 0xd0 01000000 01000000 0000000000002ee0 d499c366617faf06e23dd7d5a89291eadeccc5a79ac7cdca3a174ed5a7f858f0
+    #+end_src

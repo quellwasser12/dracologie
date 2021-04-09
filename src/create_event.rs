@@ -40,24 +40,41 @@ struct DragonseedEvent {
     cost: u64,
     hashdragon: String,
     input_index: u32,
-    output_index: u32
+    output_index: u32,
+    hex: bool
 }
 
 impl fmt::Display for DragonseedEvent {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        //  write!(f, "OP_RETURN 0xd0 {} {} {} {}", self.input_index, self.output_index, self.cost, self.hashdragon)
-        let hashbytes = hex::decode(self.hashdragon.as_str()).unwrap();
-        write!(f, "{:02x}{:02x}{:02x}{:04x}{:04x}{:016x}{}", OP_RETURN_CODE, LOKAD_ID, 0xd0, self.input_index, self.output_index, self.cost, self.hashdragon)
+        if self.hex {
+            write!(f, "{:02x}{:02x}{:02x}{}{}{:016x}{}",
+                   OP_RETURN_CODE,
+                   LOKAD_ID,
+                   0xd0,
+                   hex::encode(self.input_index.to_le_bytes()),
+                   hex::encode(self.output_index.to_le_bytes()),
+                   self.cost,
+                   self.hashdragon)
+        } else {
+            write!(f, "OP_RETURN 0x{:02x} 0x{:02x} {} {} {:016x} {}",
+                   LOKAD_ID,
+                   0xd0,
+                   hex::encode(self.input_index.to_le_bytes()),
+                   hex::encode(self.output_index.to_le_bytes()),
+                   self.cost,
+                   self.hashdragon)
+        }
     }
 }
 
-pub fn create(event: Event, hashdragon: String, cost:u64) {
+pub fn create(event: Event, hashdragon: String, cost:u64, hex:bool) {
 
     let output = match event {
         Dragonseed => { DragonseedEvent { cost: cost,
                                           hashdragon: hashdragon,
                                           input_index: 1 as u32,
-                                          output_index: 1 as u32 }.to_string() }
+                                          output_index: 1 as u32,
+                                          hex: hex}.to_string() }
     };
 
     println!("{}", output);

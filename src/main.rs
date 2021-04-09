@@ -28,7 +28,9 @@ enum Command {
     CreateEvent {
         event: create_event::Event,
         hashdragon: String,
-        cost: u64
+        cost: u64,
+        #[structopt(name = "hex", long = "hex")]
+        hex: bool // Flag to indicate whether to display
     }
 }
 
@@ -47,6 +49,6 @@ fn main() {
             }
             return;
         },
-        Command::CreateEvent { event, hashdragon, cost } => create_event::create(event, hashdragon, cost)
+        Command::CreateEvent { event, hashdragon, cost, hex } => create_event::create(event, hashdragon, cost, hex)
     };
 }
