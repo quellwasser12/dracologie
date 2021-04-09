@@ -52,8 +52,8 @@ fn bytes_to_codepoints(slice: &[u8]) -> String {
 fn describe_inner_light(inner_light: u8) -> &'static str {
     match inner_light {
         0..20 => "Ignorant",
-        201..240 => "Intelligent",
-        241..255 => "Enlightened",
+        200..240 => "Intelligent",
+        240..255 => "Enlightened",
         255 => "Genius",
         _ => ""
     }
@@ -62,10 +62,10 @@ fn describe_inner_light(inner_light: u8) -> &'static str {
 fn describe_presence(presence: u8) -> &'static str {
     match presence {
         0 => "Invisible",
-        1..5 => "Ghostly",
-        5..20 => "Shadowy",
-        210..250 => "Practical",
-        220..255 => "Shimmering",
+        1..10 => "Ghost",
+        10..30 => "Shadow",
+        240..255 => "Shimmering",
+        255 => "Scintillating",
         _ => ""
     }
 }
@@ -74,8 +74,9 @@ fn describe_charm(charm: u8) -> &'static str {
     match charm {
         0..5 => "Brutal",
         5..15 => "Unfriendly",
-        230..250 => "Frendly",
-        250..255 => "Charming",
+        190..230 => "Frendly",
+        230..250 => "Charming",
+        250..255 => "Charismatic",
         _ => ""
     }
 }
