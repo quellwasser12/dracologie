@@ -1,6 +1,8 @@
 #![feature(exclusive_range_pattern)]
 mod keyinfo;
 mod describe;
+mod create_event;
+
 
 use structopt::StructOpt;
 
@@ -21,6 +23,12 @@ enum Command {
     #[structopt(name = "describe")]
     Describe {
         hash: String
+    },
+    #[structopt(name = "create-event")]
+    CreateEvent {
+        event: create_event::Event,
+        hashdragon: String,
+        cost: u64
     }
 }
 
@@ -38,6 +46,7 @@ fn main() {
                 Err(msg) => println!("Message: {}", msg)
             }
             return;
-        }
+        },
+        Command::CreateEvent { event, hashdragon, cost } => create_event::create(event, hashdragon, cost)
     };
 }
