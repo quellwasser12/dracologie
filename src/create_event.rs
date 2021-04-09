@@ -1,3 +1,5 @@
+extern crate hex;
+
 use std::str::FromStr;
 use std::fmt;
 
@@ -43,7 +45,9 @@ struct DragonseedEvent {
 
 impl fmt::Display for DragonseedEvent {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "OP_RETURN 0xd0 {} {} {} {}", self.input_index, self.output_index, self.cost, self.hashdragon)
+        //  write!(f, "OP_RETURN 0xd0 {} {} {} {}", self.input_index, self.output_index, self.cost, self.hashdragon)
+        let hashbytes = hex::decode(self.hashdragon.as_str()).unwrap();
+        write!(f, "{:02x}{:02x}{:02x}{:04x}{:04x}{:016x}{}", OP_RETURN_CODE, LOKAD_ID, 0xd0, self.input_index, self.output_index, self.cost, self.hashdragon)
     }
 }
 
