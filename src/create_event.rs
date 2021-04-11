@@ -47,7 +47,7 @@ struct DragonseedEvent {
 impl fmt::Display for DragonseedEvent {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if self.hex {
-            write!(f, "{:02x}{:02x}{:02x}{}{}{:016x}{}",
+            write!(f, "{:02x}04{:02x}01{:02x}08{}08{}10{:016x}20{}",
                    OP_RETURN_CODE,
                    LOKAD_ID,
                    0xd0,
@@ -79,14 +79,14 @@ impl fmt::Display for HatchEvent {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 
         if self.hex {
-            write!(f, "{:02x}{:02x}{:02x}{}{}{:016x}{}",
-                   OP_RETURN_CODE,
-                   LOKAD_ID,
-                   0xd1,
-                   hex::encode(self.input_index.to_le_bytes()),
-                   hex::encode(self.output_index.to_le_bytes()),
-                   self.cost,
-                   self.hashdragon)
+            write!(f, "{:02x}04{:02x}01{:02x}04{}04{}08{:016x}20{}",
+                   OP_RETURN_CODE, // 1 byte
+                   LOKAD_ID, // 4 bytes
+                   0xd1, // 1 byte
+                   hex::encode(self.input_index.to_le_bytes()), // 4 bytes
+                   hex::encode(self.output_index.to_le_bytes()),  // 4 bytes
+                   self.cost, // 8 bytes
+                   self.hashdragon) // 32 bytes (20 in hdex)
         } else {
             write!(f, "OP_RETURN 0x{:02x} 0x{:02x} {} {} {:016x} {}",
                    LOKAD_ID,
@@ -111,7 +111,7 @@ struct WanderEvent {
 impl fmt::Display for WanderEvent {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if self.hex {
-            write!(f, "{:02x}{:02x}{:02x}{}{}{}",
+            write!(f, "{:02x}04{:02x}01{:02x}04{}04{}20{}",
                    OP_RETURN_CODE,
                    LOKAD_ID,
                    0xd2,
@@ -141,7 +141,7 @@ struct HibernateEvent {
 impl fmt::Display for HibernateEvent {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if self.hex {
-            write!(f, "{:02x}{:02x}{:02x}{}{}{}",
+            write!(f, "{:02x}04{:02x}01{:02x}04{}04{}20{}",
                    OP_RETURN_CODE,
                    LOKAD_ID,
                    0xd3,
@@ -186,4 +186,22 @@ pub fn create(event: Event, hashdragon: String, cost:u64, txn_ref: String, hex:b
     };
 
     println!("{}", output);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_hatch() {
+        let hatch_event = HatchEvent {
+            cost: 0,
+            hashdragon: "d4b74244fde6c5bdad53ce7606fa1e7d8657d9a3debbdcb0132f8e9580fa5d76".to_string(),
+            input_index: 1,
+            output_index: 1,
+            hex: true
+        };
+        assert_eq!(hatch_event.to_string(),
+                   "6a04d101d40001d10401000000040100000008000000000000000020d4b74244fde6c5bdad53ce7606fa1e7d8657d9a3debbdcb0132f8e9580fa5d76")
+    }
 }
