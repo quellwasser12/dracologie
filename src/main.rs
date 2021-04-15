@@ -1,6 +1,7 @@
 #![feature(exclusive_range_pattern)]
 mod keyinfo;
 mod describe;
+mod bch_api;
 mod create_event;
 
 
@@ -36,7 +37,6 @@ enum Command {
         txn_ref: Option<String>
     }
 }
-
 
 
 fn main() {

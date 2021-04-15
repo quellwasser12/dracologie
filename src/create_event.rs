@@ -2,9 +2,13 @@ extern crate hex;
 
 use std::str::FromStr;
 use std::fmt;
+use futures::executor::block_on;
+
+use crate::bch_api;
 
 // LE, Cf. https://github.com/bitcoincashorg/bitcoincash.org/blob/master/etc/protocols.csv
-const LOKAD_ID:u32 = 0xd101d400;
+// After 684000 switch from LE to BE
+const LOKAD_ID:u32 = 0xd101d400; // LE
 const OP_RETURN_CODE:u8 = 0x6a;
 
 
@@ -77,6 +81,8 @@ struct HatchEvent {
 
 impl fmt::Display for HatchEvent {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+
+        block_on(bch_api::get_transaction("fcf5a12c7a85271e8726f0bb53d683335fe84d9c683ec5d0f038114951a2863d"));
 
         if self.hex {
             write!(f, "{:02x}04{:02x}01{:02x}04{}04{}08{:016x}20{}",
