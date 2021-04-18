@@ -51,7 +51,7 @@ pub struct Transaction {
     pub vout:Vec<TxOut>,
     blockhash:String,
     confirmations:u32,
-    time:u32,
+    pub time:u32,
     blocktime:u32
 }
 

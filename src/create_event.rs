@@ -7,17 +7,15 @@ use std::fmt;
 use bch_api::{Transaction, TxOut};
 use bitcoincash::blockdata::script::Script;
 use futures::executor::block_on;
-use std::collections::HashMap;
-
 
 use crate::bch_api;
-
-// After 684000 switch from LE to BE
-
 
 // LE, Cf. https://github.com/bitcoincashorg/bitcoincash.org/blob/master/etc/protocols.csv
 const LOKAD_ID:u32 = 0xd101d400;
 const OP_RETURN_CODE:u8 = 0x6a;
+
+// After 684000 switch from LE to BE
+const BE_TIME:u32 = 1618794000;
 
 
 /// Different types of events
@@ -101,7 +99,7 @@ struct Param {
 
 //  Example of a return
 // 6a04d101d40001d10401000000040100000008000000000000000020d41a8517be90657bd88502def8b6c9ffca37f6c8a2d631d02b535d47965c479c
-fn parse_hashdragon_script(script:&String) -> Param {
+fn parse_hashdragon_script(script:&String, be:bool) -> Param {
 
     let parts:Vec<u8> = hex::decode(script).unwrap();
     let parsed_script = Script::from(parts);
@@ -123,11 +121,15 @@ fn parse_hashdragon_script(script:&String) -> Param {
     match cmd {
         0xd1 => {
             assert!(parsed_script_bytes[8] == 0x04);
-            let input_index:[u8;4] = util::from_slice_to_four_u8(&parsed_script_bytes[9..13]);
+
+            let mut input_index:[u8;4] = util::from_slice_to_four_u8(&parsed_script_bytes[9..13]);
+            if !be { input_index.reverse(); }
             assert!(parsed_script_bytes[13] == 0x04);
-            let output_index:[u8;4] = util::from_slice_to_four_u8(&parsed_script_bytes[14..18]);
+            let mut output_index:[u8;4] = util::from_slice_to_four_u8(&parsed_script_bytes[14..18]);
+            if !be { output_index.reverse(); }
             assert!(parsed_script_bytes[18] == 0x08);
-            let cost:[u8;8] = util::from_slice_to_eight_u8(&parsed_script_bytes[19..27]);
+            let mut cost:[u8;8] = util::from_slice_to_eight_u8(&parsed_script_bytes[19..27]);
+            if !be { cost.reverse(); }
             assert!(parsed_script_bytes[27] == 0x20);
             let hashdragon:[u8;32] = util::from_slice_to_thirtytwo_u8(&parsed_script_bytes[28..60]);
 
@@ -154,27 +156,27 @@ fn verify_hashdragon_txn(txn: &Transaction) -> Param {
     let script_pub_key: &bch_api::ScriptPubKey = &vout0.script_pub_key;
     println!("ScriptPubKey: {:?}", script_pub_key);
 
-    return parse_hashdragon_script(&script_pub_key.hex);
+    return parse_hashdragon_script(&script_pub_key.hex, txn.time > BE_TIME);
 }
 
 
 // Create the Hatch event script.
-fn output_hatch_script(event: &HatchEvent, f: &mut fmt::Formatter) -> fmt::Result {
+fn output_hatch_script(event: &HatchEvent, f: &mut fmt::Formatter, param: &Param) -> fmt::Result {
     if event.hex {
         write!(f, "{:02x}04{:02x}01{:02x}04{}04{}08{:016x}20{}",
                OP_RETURN_CODE, // 1 byte
                LOKAD_ID, // 4 bytes
                0xd1, // 1 byte
-               hex::encode(event.input_index.to_le_bytes()), // 4 bytes
-               hex::encode(event.output_index.to_le_bytes()),  // 4 bytes
+               hex::encode(event.input_index.to_be_bytes()), // 4 bytes
+               hex::encode(event.output_index.to_be_bytes()),  // 4 bytes
                event.cost, // 8 bytes
                event.hashdragon) // 32 bytes (20 in hdex)
     } else {
         write!(f, "OP_RETURN 0x{:02x} 0x{:02x} {} {} {:016x} {}",
                LOKAD_ID,
                0xd1,
-               hex::encode(event.input_index.to_le_bytes()),
-               hex::encode(event.output_index.to_le_bytes()),
+               hex::encode(event.input_index.to_be_bytes()),
+               hex::encode(event.output_index.to_be_bytes()),
                event.cost,
                event.hashdragon)
     }
@@ -184,12 +186,19 @@ impl fmt::Display for HatchEvent {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 
         let original_txn = block_on::<_>(bch_api::get_transaction(self.txn_ref.as_str()));
+        println!("Transaction: {:?}", original_txn);
         match original_txn {
             Err(e) => panic!("Error retrieving original txn: {}", e),
             Ok(txn) => {
                 let param = verify_hashdragon_txn(&txn);
                 println!("{:?}", param);
-                return output_hatch_script(self, f);
+
+                let hd = param.hashdragon.clone();
+                match hd {
+                    Some(d) => assert!(d == self.hashdragon), // Checks that hashdragon is ref txn is the same one
+                    None => panic!("No hashdragon found")     // FIXME Proper error handling rather than panic!
+                };
+                return output_hatch_script(self, f, &param);
             }
         }
     }
