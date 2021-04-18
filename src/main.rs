@@ -1,5 +1,6 @@
 #![feature(exclusive_range_pattern)]
 mod keyinfo;
+mod util;
 mod describe;
 mod bch_api;
 mod create_event;
@@ -33,7 +34,7 @@ enum Command {
         hex: bool, // Flag to indicate whether to display
         #[structopt(name = "cost", long, required_if("event", "dragonseed"))]
         cost: Option<u64>,
-        #[structopt(name="txn-ref", long, required_if("event", "wander"))]
+        #[structopt(name="txn-ref", long)]
         txn_ref: Option<String>
     }
 }

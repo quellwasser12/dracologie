@@ -2,8 +2,9 @@ extern crate hex;
 
 use colored::*;
 
-use std::convert::TryFrom;
 use bit_vec::BitVec;
+
+use crate::util;
 
 pub struct Virtues {
     pub identity: BitVec,
@@ -21,32 +22,6 @@ pub struct Virtues {
     pub cabala: u32,
     pub maturity: u16,
     pub sigil: u16
-}
-
-
-// FIXME There must be a better to do this in Rust, i.e. with templates
-fn from_slice_to_four_u8(slice: &[u8]) -> [u8;4] {
-    return <[u8; 4]>::try_from(slice).unwrap();
-}
-
-fn from_slice_to_three_u8(slice: &[u8]) -> [u8;3] {
-    return <[u8; 3]>::try_from(slice).unwrap();
-}
-
-
-fn from_slice_to_two_u8(slice: &[u8]) -> [u8;2] {
-    return <[u8; 2]>::try_from(slice).unwrap();
-}
-
-fn from_slice_to_sixteen_u8(slice: &[u8]) -> [u8;16] {
-    return <[u8; 16]>::try_from(slice).unwrap();
-}
-
-
-fn bytes_to_codepoints(slice: &[u8]) -> String {
-    unsafe { [char::from_u32_unchecked(4608 + slice[0] as u32),
-              char::from_u32_unchecked(4608 + slice[1] as u32)].iter().collect()
-    }
 }
 
 fn describe_inner_light(inner_light: u8) -> &'static str {
@@ -142,8 +117,8 @@ pub fn describe(hashdragon: String) -> Result<(), String> {
     }
 
     // Strength
-    let high_bytes = from_slice_to_sixteen_u8(&b[0..16]);
-    let low_bytes = from_slice_to_sixteen_u8(&b[16..32]);
+    let high_bytes = util::from_slice_to_sixteen_u8(&b[0..16]);
+    let low_bytes = util::from_slice_to_sixteen_u8(&b[16..32]);
     let strength = u128::from_be_bytes(high_bytes).count_ones() +
         u128::from_be_bytes(low_bytes).count_ones();
 
@@ -157,7 +132,7 @@ pub fn describe(hashdragon: String) -> Result<(), String> {
     let virtues = Virtues {
         identity: BitVec::from_bytes(&b[1..3]),
         inner_light: b[3],
-        colour: from_slice_to_three_u8(&b[4..7]),
+        colour: util::from_slice_to_three_u8(&b[4..7]),
         presence: b[7],
         charm: b[8],
         strangeness: b[9],
@@ -165,11 +140,11 @@ pub fn describe(hashdragon: String) -> Result<(), String> {
         truth: b[11],
         magic: b[12],
         special_powers: BitVec::from_bytes(&b[13..16]),
-        manifestation: u32::from_be_bytes(from_slice_to_four_u8(&b[16..20])),
-        arcana: u32::from_be_bytes(from_slice_to_four_u8(&b[20..24])),
-        cabala: u32::from_be_bytes(from_slice_to_four_u8(&b[24..28])),
-        maturity: u16::from_be_bytes(from_slice_to_two_u8(&b[28..30])),
-        sigil: u16::from_be_bytes(from_slice_to_two_u8(&b[30..32]))
+        manifestation: u32::from_be_bytes(util::from_slice_to_four_u8(&b[16..20])),
+        arcana: u32::from_be_bytes(util::from_slice_to_four_u8(&b[20..24])),
+        cabala: u32::from_be_bytes(util::from_slice_to_four_u8(&b[24..28])),
+        maturity: u16::from_be_bytes(util::from_slice_to_two_u8(&b[28..30])),
+        sigil: u16::from_be_bytes(util::from_slice_to_two_u8(&b[30..32]))
     };
 
     let inner_light = describe_inner_light(virtues.inner_light);
@@ -210,7 +185,7 @@ pub fn describe(hashdragon: String) -> Result<(), String> {
     println!("Arcana: {}", virtues.arcana);
     println!("Cabala: {}", virtues.cabala);
     println!("Maturity: {}", virtues.maturity);
-    println!("Sigil: {}", bytes_to_codepoints(&virtues.sigil.to_be_bytes()));
+    println!("Sigil: {}", util::bytes_to_codepoints(&virtues.sigil.to_be_bytes()));
 
     Ok(())
 }
