@@ -63,9 +63,10 @@ fn describe_presence(presence: u8) -> &'static str {
     match presence {
         0 => "Invisible",
         1..10 => "Ghost",
-        10..30 => "Shadow",
-        240..255 => "Shimmering",
-        255 => "Scintillating",
+        10..40 => "Shadow",
+        40..60 => "Shimmering",
+        230..255 => "Rock",
+        255 => "Marble",
         _ => ""
     }
 }
@@ -83,6 +84,7 @@ fn describe_charm(charm: u8) -> &'static str {
 
 fn describe_strangeness(strangeness: u8) -> &'static str {
     match strangeness {
+        0..10 => "Practical",
         200..240 => "Strange",
         240..255 => "Weird",
         _ => ""
