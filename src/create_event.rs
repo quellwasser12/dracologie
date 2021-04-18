@@ -302,12 +302,13 @@ mod tests {
     fn test_hatch() {
         let hatch_event = HatchEvent {
             cost: 0,
-            hashdragon: "d4b74244fde6c5bdad53ce7606fa1e7d8657d9a3debbdcb0132f8e9580fa5d76".to_string(),
+            hashdragon: "d41a8517be90657bd88502def8b6c9ffca37f6c8a2d631d02b535d47965c479c".to_string(),
+            txn_ref: "fcf5a12c7a85271e8726f0bb53d683335fe84d9c683ec5d0f038114951a2863d".to_string(),
             input_index: 1,
             output_index: 1,
             hex: true
         };
         assert_eq!(hatch_event.to_string(),
-                   "6a04d101d40001d10401000000040100000008000000000000000020d4b74244fde6c5bdad53ce7606fa1e7d8657d9a3debbdcb0132f8e9580fa5d76")
+                   "6a04d101d40001d10400000001040000000108000000000000000020d41a8517be90657bd88502def8b6c9ffca37f6c8a2d631d02b535d47965c479c")
     }
 }
