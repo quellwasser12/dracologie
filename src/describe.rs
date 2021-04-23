@@ -144,19 +144,6 @@ pub fn describe(hashdragon: String) -> Result<(), String> {
         return Err(msg.to_string());
     }
 
-    // Strength
-    let high_bytes = from_slice_to_sixteen_u8(&b[0..16]);
-    let low_bytes = from_slice_to_sixteen_u8(&b[16..32]);
-    let strength = u128::from_be_bytes(high_bytes).count_ones() +
-        u128::from_be_bytes(low_bytes).count_ones();
-
-    print!("Strength: {}", strength);
-    if strength > 140 {
-        println!("  (Powerful)");
-    } else {
-        println!();
-    }
-
     let virtues = Virtues {
         identity: BitVec::from_bytes(&b[1..3]),
         inner_light: b[3],
@@ -175,7 +162,41 @@ pub fn describe(hashdragon: String) -> Result<(), String> {
         sigil: u16::from_be_bytes(from_slice_to_two_u8(&b[30..32]))
     };
 
+
+    // Strength
+    let high_bytes = from_slice_to_sixteen_u8(&b[0..16]);
+    let low_bytes = from_slice_to_sixteen_u8(&b[16..32]);
+    let strength = u128::from_be_bytes(high_bytes).count_ones() +
+        u128::from_be_bytes(low_bytes).count_ones();
+
     let inner_light = describe_inner_light(virtues.inner_light);
+    let presence = describe_presence(virtues.presence);
+    let charm = describe_charm(virtues.charm);
+    let strangeness = describe_strangeness(virtues.strangeness);
+    let beauty = describe_beauty(virtues.beauty);
+    let truth = describe_truth(virtues.truth);
+    let magic = describe_magic(virtues.magic);
+
+    let virtues_description = vec![inner_light, presence, charm, strangeness, beauty, truth, magic];
+    let personality = virtues_description.iter().filter(|&s| s.len() > 0)
+        .cloned()
+        .collect::<Vec<&str>>()
+        .join(", ");
+    if personality.len() == 0 {
+        println!("Unremarkable.");
+    } else {
+        println!("{}.", personality);
+    }
+    println!();
+
+
+    print!("Strength: {}", strength);
+    if strength > 140 {
+        println!("  (Powerful)");
+    } else {
+        println!();
+    }
+
     print_virtue("Inner Light", virtues.inner_light, inner_light);
 
     // Colour
@@ -184,28 +205,11 @@ pub fn describe(hashdragon: String) -> Result<(), String> {
                                             virtues.colour[2]));
 
 
-    // Presence
-    let presence = describe_presence(virtues.presence);
     print_virtue("Presence", virtues.presence, presence);
-
-    // Charm
-    let charm = describe_charm(virtues.charm);
     print_virtue("Charm", virtues.charm, charm);
-
-    // Strangeness
-    let strangeness = describe_strangeness(virtues.strangeness);
     print_virtue("Strangeness", virtues.strangeness, strangeness);
-
-    // Beauty
-    let beauty = describe_beauty(virtues.beauty);
     print_virtue("Beauty", virtues.beauty, beauty);
-
-    // Truth
-    let truth = describe_truth(virtues.truth);
     print_virtue("Truth", virtues.truth, truth);
-
-    // Magic
-    let magic = describe_magic(virtues.magic);
     print_virtue("Magic", virtues.magic, magic);
 
     println!("Special Powers: {:?}", virtues.special_powers);
