@@ -16,6 +16,7 @@ struct Opt {
 }
 
 #[derive(Debug, StructOpt)]
+#[structopt(name = "dracologie", about = "Useful commands for hashdragons")]
 enum Command {
 
     #[structopt(name = "keyinfo")]
@@ -30,12 +31,16 @@ enum Command {
     CreateEvent {
         event: create_event::Event,
         hashdragon: String,
+
+        /// Flag to indicate whether to display script as hex.
         #[structopt(name = "hex", long = "hex")]
-        hex: bool, // Flag to indicate whether to display
+        hex: bool,
         #[structopt(name = "cost", long, required_if("event", "dragonseed"))]
         cost: Option<u64>,
+
+        /// Hash of the last hashdragon transaction
         #[structopt(name="txn-ref", long)]
-        txn_ref: Option<String>
+        txn_ref: String
     }
 }
 
@@ -58,11 +63,7 @@ fn main() {
                 Some(c) => c,
                 None => 0
             };
-            let txn_ref_value = match txn_ref {
-                Some(reference) => reference,
-                None => "".to_string()
-            };
-            create_event::create(event, hashdragon, cost_value, txn_ref_value, hex)
+            create_event::create(event, hashdragon, cost_value, txn_ref, hex)
         }
     };
 }

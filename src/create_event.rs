@@ -25,12 +25,15 @@ pub enum Event {
     Dragonseed,
     Hatch,
     Wander,
+    Rescue,
     Hibernate,
     Breed,
     Trade,
     Fight
 }
 
+
+/// Converts a string into its corresponding enum.
 impl FromStr for Event {
     type Err = String;
 
@@ -40,6 +43,7 @@ impl FromStr for Event {
             "dragonseed" => Ok(Event::Dragonseed),
             "hatch" => Ok(Event::Hatch),
             "wander" => Ok(Event::Wander),
+            "rescue" => Ok(Event::Rescue),
             "hibernate" => Ok(Event::Hibernate),
             _ => Err(format!("Invalid event: {}", s))
         }
@@ -90,10 +94,12 @@ struct HatchEvent {
 
 #[derive(Debug)]
 struct Param {
+    action: Event,
     cost: Option<u64>,
     hashdragon: Option<String>,
     input_index: Option<u32>,
-    output_index: Option<u32>
+    output_index: Option<u32>,
+    txn_ref: Option<String>
 }
 
 
@@ -118,15 +124,16 @@ fn parse_hashdragon_script(script:&String, be:bool) -> Param {
     assert!(parsed_script_bytes[6] == 0x01);
     let cmd = parsed_script_bytes[7];
 
-    match cmd {
-        0xd1 => {
-            assert!(parsed_script_bytes[8] == 0x04);
+    assert!(parsed_script_bytes[8] == 0x04);
+    let mut input_index:[u8;4] = util::from_slice_to_four_u8(&parsed_script_bytes[9..13]);
+    if !be { input_index.reverse(); }
+    assert!(parsed_script_bytes[13] == 0x04);
+    let mut output_index:[u8;4] = util::from_slice_to_four_u8(&parsed_script_bytes[14..18]);
+    if !be { output_index.reverse(); }
 
-            let mut input_index:[u8;4] = util::from_slice_to_four_u8(&parsed_script_bytes[9..13]);
-            if !be { input_index.reverse(); }
-            assert!(parsed_script_bytes[13] == 0x04);
-            let mut output_index:[u8;4] = util::from_slice_to_four_u8(&parsed_script_bytes[14..18]);
-            if !be { output_index.reverse(); }
+    match cmd {
+
+        0xd1 => {
             assert!(parsed_script_bytes[18] == 0x08);
             let mut cost:[u8;8] = util::from_slice_to_eight_u8(&parsed_script_bytes[19..27]);
             if !be { cost.reverse(); }
@@ -134,12 +141,37 @@ fn parse_hashdragon_script(script:&String, be:bool) -> Param {
             let hashdragon:[u8;32] = util::from_slice_to_thirtytwo_u8(&parsed_script_bytes[28..60]);
 
             return Param {
+                action: Event::Hatch,
                 cost: Some(util::as_u64_be(&cost)),
                 hashdragon: Some(hex::encode(hashdragon)),
                 input_index: Some(util::as_u32_be(&input_index)),
-                output_index: Some(util::as_u32_be(&output_index))
+                output_index: Some(util::as_u32_be(&output_index)),
+                txn_ref: None
             };
+        },
 
+        0xd2 => {
+            if parsed_script_bytes.len() == 18 {
+                return Param {
+                    action: Event::Wander,
+                    cost: None,
+                    input_index: Some(util::as_u32_be(&input_index)),
+                    output_index: Some(util::as_u32_be(&output_index)),
+                    hashdragon: None,
+                    txn_ref: None
+                }
+            } else {
+                assert!(parsed_script_bytes[18] == 0x20);
+                let txn_ref:[u8;32] = util::from_slice_to_thirtytwo_u8(&parsed_script_bytes[19..51]);
+                return Param {
+                    action: Event::Rescue,
+                    cost: None,
+                    input_index: Some(util::as_u32_be(&input_index)),
+                    output_index: Some(util::as_u32_be(&output_index)),
+                    hashdragon: None,
+                    txn_ref: Some(hex::encode(txn_ref))
+                }
+            }
         },
         _ => panic!("Unknown command")
     }
@@ -147,7 +179,7 @@ fn parse_hashdragon_script(script:&String, be:bool) -> Param {
 }
 
 
-// Verifies the reference transaction used as input for the dragon event.
+/// Verifies the reference transaction used as input for the dragon event.
 fn verify_hashdragon_txn(txn: &Transaction) -> Param {
     let vout_vec:&Vec<TxOut> = &txn.vout;
 
@@ -160,8 +192,9 @@ fn verify_hashdragon_txn(txn: &Transaction) -> Param {
 }
 
 
-// Create the Hatch event script.
+/// Create the Hatch event script.
 fn output_hatch_script(event: &HatchEvent, f: &mut fmt::Formatter, param: &Param) -> fmt::Result {
+
     if event.hex {
         write!(f, "{:02x}04{:02x}01{:02x}04{}04{}08{:016x}20{}",
                OP_RETURN_CODE, // 1 byte
@@ -194,9 +227,10 @@ impl fmt::Display for HatchEvent {
                 println!("{:?}", param);
 
                 let hd = param.hashdragon.clone();
-                match hd {
-                    Some(d) => assert!(d == self.hashdragon), // Checks that hashdragon is ref txn is the same one
-                    None => panic!("No hashdragon found")     // FIXME Proper error handling rather than panic!
+                if let Some(d) = hd {
+                    assert!(d == self.hashdragon)
+                } else {
+                    panic!("No hashdragon found")
                 };
                 return output_hatch_script(self, f, &param);
             }
@@ -216,24 +250,52 @@ struct WanderEvent {
 impl fmt::Display for WanderEvent {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if self.hex {
-            write!(f, "{:02x}04{:02x}01{:02x}04{}04{}20{}",
+            write!(f, "{:02x}04{:02x}01{:02x}04{}04{}",
                    OP_RETURN_CODE,
                    LOKAD_ID,
                    0xd2,
-                   hex::encode(self.input_index.to_le_bytes()),
-                   hex::encode(self.output_index.to_le_bytes()),
-                   self.hashdragon)
+                   hex::encode(self.input_index.to_be_bytes()),
+                   hex::encode(self.output_index.to_be_bytes()))
         } else {
-            write!(f, "OP_RETURN 0x{:02x} 0x{:02x} {} {} {}",
+            write!(f, "OP_RETURN 0x{:02x} 0x{:02x} {} {}",
                    LOKAD_ID,
                    0xd2,
-                   hex::encode(self.input_index.to_le_bytes()),
-                   hex::encode(self.output_index.to_le_bytes()),
-                   self.hashdragon)
+                   hex::encode(self.input_index.to_be_bytes()),
+                   hex::encode(self.output_index.to_be_bytes()))
         }
     }
 }
 
+
+struct RescueEvent {
+    hashdragon: String,
+    input_index: u32,
+    output_index: u32,
+    txn_ref: String,
+    hex: bool
+}
+
+
+impl fmt::Display for RescueEvent {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        if self.hex {
+            write!(f, "{:02x}04{:02x}01{:02x}04{}04{}20{}",
+                   OP_RETURN_CODE,
+                   LOKAD_ID,
+                   0xd2,
+                   hex::encode(self.input_index.to_be_bytes()),
+                   hex::encode(self.output_index.to_be_bytes()),
+                   self.txn_ref)
+        } else {
+            write!(f, "OP_RETURN 0x{:02x} 0x{:02x} {} {} {}",
+                   LOKAD_ID,
+                   0xd2,
+                   hex::encode(self.input_index.to_be_bytes()),
+                   hex::encode(self.output_index.to_be_bytes()),
+                   self.txn_ref)
+        }
+    }
+}
 
 struct HibernateEvent {
     hashdragon: String,
@@ -265,8 +327,10 @@ impl fmt::Display for HibernateEvent {
 }
 
 
-
+/// Create an event based on the options passed on the command line.
 pub fn create(event: Event, hashdragon: String, cost:u64, txn_ref: String, hex:bool) {
+
+    // TODO Get indices from txn_ref.
     let output = match event {
         Event::Dragonseed => { DragonseedEvent { cost: cost,
                                                  hashdragon: hashdragon,
@@ -280,6 +344,11 @@ pub fn create(event: Event, hashdragon: String, cost:u64, txn_ref: String, hex:b
                                        output_index: 1 as u32,
                                        hex: hex }.to_string() },
         Event::Wander => { WanderEvent { hashdragon: hashdragon,
+                                         input_index: 1 as u32,
+                                         output_index: 1 as u32,
+                                         txn_ref: txn_ref,
+                                         hex: hex }.to_string() },
+        Event::Rescue => { RescueEvent { hashdragon: hashdragon,
                                          input_index: 1 as u32,
                                          output_index: 1 as u32,
                                          txn_ref: txn_ref,
@@ -310,5 +379,25 @@ mod tests {
         };
         assert_eq!(hatch_event.to_string(),
                    "6a04d101d40001d10400000001040000000108000000000000000020d41a8517be90657bd88502def8b6c9ffca37f6c8a2d631d02b535d47965c479c")
+    }
+
+
+    #[test]
+    fn test_parse_hashdragon_script_wander() {
+        let parsed_script_val = parse_hashdragon_script(&"6a04d101d40001d204000000010400000001".to_string(), true);
+        assert_eq!(parsed_script_val.action, Event::Wander);
+        assert_eq!(parsed_script_val.cost, None);
+        assert_eq!(parsed_script_val.input_index.unwrap(), 1);
+        assert_eq!(parsed_script_val.output_index.unwrap(), 1);
+    }
+
+    #[test]
+    fn test_parse_hashdragon_script_rescue() {
+        let parsed_script_val = parse_hashdragon_script(&"6a04d101d40001d20400000001040000000120f3ced6df469e44ddc774af1df41c7a5e0381217b9e9462ca6f05781ed6dc3ba0".to_string(), true);
+        assert_eq!(parsed_script_val.action, Event::Rescue);
+        assert_eq!(parsed_script_val.cost, None);
+        assert_eq!(parsed_script_val.input_index.unwrap(), 1);
+        assert_eq!(parsed_script_val.output_index.unwrap(), 1);
+        assert_eq!(parsed_script_val.txn_ref.unwrap(), "f3ced6df469e44ddc774af1df41c7a5e0381217b9e9462ca6f05781ed6dc3ba0");
     }
 }
