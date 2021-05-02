@@ -51,6 +51,7 @@ impl FromStr for Event {
 }
 
 
+/// For historical purposes, seeding has already occurred.
 struct DragonseedEvent {
     cost: u64,
     hashdragon: String,
@@ -93,7 +94,7 @@ struct HatchEvent {
 
 
 #[derive(Debug)]
-struct Param {
+pub struct Param {
     action: Event,
     cost: Option<u64>,
     hashdragon: Option<String>,
@@ -105,7 +106,7 @@ struct Param {
 
 //  Example of a return
 // 6a04d101d40001d10401000000040100000008000000000000000020d41a8517be90657bd88502def8b6c9ffca37f6c8a2d631d02b535d47965c479c
-fn parse_hashdragon_script(script:&String, be:bool) -> Param {
+pub fn parse_hashdragon_script(script:&String, be:bool) -> Param {
 
     let parts:Vec<u8> = hex::decode(script).unwrap();
     let parsed_script = Script::from(parts);
@@ -115,29 +116,29 @@ fn parse_hashdragon_script(script:&String, be:bool) -> Param {
     let parsed_script_bytes = parsed_script.into_bytes();
 
     // OP_RETURN
-    assert!(parsed_script_bytes[0] == 0x6a);
+    assert_eq!(parsed_script_bytes[0], 0x6a);
     // OP_PUSHBYTES_4
-    assert!(parsed_script_bytes[1] == 0x04);
+    assert_eq!(parsed_script_bytes[1], 0x04);
     // LOKAD ID
-    assert!(parsed_script_bytes[2..6] == LOKAD_ID.to_be_bytes());
+    assert_eq!(parsed_script_bytes[2..6], LOKAD_ID.to_be_bytes());
     // OP_PUSHBYTES_1
-    assert!(parsed_script_bytes[6] == 0x01);
+    assert_eq!(parsed_script_bytes[6], 0x01);
     let cmd = parsed_script_bytes[7];
 
-    assert!(parsed_script_bytes[8] == 0x04);
+    assert_eq!(parsed_script_bytes[8], 0x04);
     let mut input_index:[u8;4] = util::from_slice_to_four_u8(&parsed_script_bytes[9..13]);
     if !be { input_index.reverse(); }
-    assert!(parsed_script_bytes[13] == 0x04);
+    assert_eq!(parsed_script_bytes[13], 0x04);
     let mut output_index:[u8;4] = util::from_slice_to_four_u8(&parsed_script_bytes[14..18]);
     if !be { output_index.reverse(); }
 
     match cmd {
 
         0xd1 => {
-            assert!(parsed_script_bytes[18] == 0x08);
+            assert_eq!(parsed_script_bytes[18], 0x08);
             let mut cost:[u8;8] = util::from_slice_to_eight_u8(&parsed_script_bytes[19..27]);
             if !be { cost.reverse(); }
-            assert!(parsed_script_bytes[27] == 0x20);
+            assert_eq!(parsed_script_bytes[27], 0x20);
             let hashdragon:[u8;32] = util::from_slice_to_thirtytwo_u8(&parsed_script_bytes[28..60]);
 
             return Param {
@@ -161,7 +162,7 @@ fn parse_hashdragon_script(script:&String, be:bool) -> Param {
                     txn_ref: None
                 }
             } else {
-                assert!(parsed_script_bytes[18] == 0x20);
+                assert_eq!(parsed_script_bytes[18], 0x20);
                 let txn_ref:[u8;32] = util::from_slice_to_thirtytwo_u8(&parsed_script_bytes[19..51]);
                 return Param {
                     action: Event::Rescue,
@@ -203,7 +204,7 @@ fn output_hatch_script(event: &HatchEvent, f: &mut fmt::Formatter, param: &Param
                hex::encode(event.input_index.to_be_bytes()), // 4 bytes
                hex::encode(event.output_index.to_be_bytes()),  // 4 bytes
                event.cost, // 8 bytes
-               event.hashdragon) // 32 bytes (20 in hdex)
+               event.hashdragon) // 32 bytes (20 in hex)
     } else {
         write!(f, "OP_RETURN 0x{:02x} 0x{:02x} {} {} {:016x} {}",
                LOKAD_ID,
@@ -228,7 +229,7 @@ impl fmt::Display for HatchEvent {
 
                 let hd = param.hashdragon.clone();
                 if let Some(d) = hd {
-                    assert!(d == self.hashdragon)
+                    assert_eq!(d, self.hashdragon)
                 } else {
                     panic!("No hashdragon found")
                 };
@@ -238,12 +239,12 @@ impl fmt::Display for HatchEvent {
     }
 }
 
-struct WanderEvent {
-    hashdragon: String,
-    input_index: u32,
-    output_index: u32,
-    txn_ref: String,
-    hex: bool
+pub struct WanderEvent {
+    pub hashdragon: String,
+    pub input_index: u32,
+    pub output_index: u32,
+    pub txn_ref: String,
+    pub hex: bool
 }
 
 
@@ -312,15 +313,15 @@ impl fmt::Display for HibernateEvent {
                    OP_RETURN_CODE,
                    LOKAD_ID,
                    0xd3,
-                   hex::encode(self.input_index.to_le_bytes()),
-                   hex::encode(self.output_index.to_le_bytes()),
+                   hex::encode(self.input_index.to_be_bytes()),
+                   hex::encode(self.output_index.to_be_bytes()),
                    self.hashdragon)
         } else {
             write!(f, "OP_RETURN 0x{:02x} 0x{:02x} {} {} {}",
                    LOKAD_ID,
                    0xd3,
-                   hex::encode(self.input_index.to_le_bytes()),
-                   hex::encode(self.output_index.to_le_bytes()),
+                   hex::encode(self.input_index.to_be_bytes()),
+                   hex::encode(self.output_index.to_be_bytes()),
                    self.hashdragon)
         }
     }

@@ -52,7 +52,8 @@ pub struct Transaction {
     blockhash:String,
     confirmations:u32,
     pub time:u32,
-    blocktime:u32
+    blocktime:u32,
+    pub hex:String
 }
 
 pub async fn get_transaction(txn_hash:&str) -> Result<Transaction, Error> {

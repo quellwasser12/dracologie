@@ -48,6 +48,12 @@ checksum = "349f9b6a179ed607305526ca489b34ad0a41aed5f7980fa90eb03160b69598fb"
 
 [[package]]
 name = "bitcoin_hashes"
+version = "0.7.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b375d62f341cef9cd9e77793ec8f1db3fc9ce2e4d57e982c8fe697a2c16af3b6"
+
+[[package]]
+name = "bitcoin_hashes"
 version = "0.9.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0aaf87b776808e26ae93289bc7d025092b6d909c193f0cdee0b3a86e7bd3c776"
@@ -59,8 +65,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2a24e9a6cd26f114230c318e024d5512a4bc6140a91ec0b5539e611b9edb11af"
 dependencies = [
  "bech32",
- "bitcoin_hashes",
+ "bitcoin_hashes 0.9.4",
  "secp256k1",
+]
+
+[[package]]
+name = "bitcoincash-addr"
+version = "0.5.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ad79afbfd27efc52fc928b198a365a7ee9da8d881a18c16d88764880b675e543"
+dependencies = [
+ "bitcoin_hashes 0.7.6",
 ]
 
 [[package]]
@@ -140,8 +155,9 @@ name = "dracologie"
 version = "0.1.0"
 dependencies = [
  "bit-vec",
- "bitcoin_hashes",
+ "bitcoin_hashes 0.9.4",
  "bitcoincash",
+ "bitcoincash-addr",
  "colored",
  "futures",
  "hdwallet",

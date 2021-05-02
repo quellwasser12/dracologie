@@ -1,4 +1,5 @@
 use std::convert::TryFrom;
+use bitcoincash_addr::{Network, Scheme};
 
 
 // FIXME There must be a better to do this in Rust, i.e. with templates
@@ -70,4 +71,13 @@ pub fn as_u64_le(array: &[u8; 8]) -> u64 {
     ((array[5] as u64) << 40) |
     ((array[6] as u64) << 48) |
     ((array[7] as u64) << 56)
+}
+
+/// Convert a CashAddr to Legacy
+pub fn from_cashaddr_to_legacy(addr:&str) -> String {
+    let mut legacy_addr:bitcoincash_addr::Address = bitcoincash_addr::Address::decode(addr).unwrap();
+    legacy_addr.network = Network::Main;
+    legacy_addr.scheme = Scheme::Base58;
+
+    return legacy_addr.encode().unwrap();
 }

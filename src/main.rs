@@ -4,7 +4,7 @@ mod util;
 mod describe;
 mod bch_api;
 mod create_event;
-
+mod create_txn;
 
 use structopt::StructOpt;
 
@@ -41,6 +41,27 @@ enum Command {
         /// Hash of the last hashdragon transaction
         #[structopt(name="txn-ref", long)]
         txn_ref: String
+    },
+    #[structopt(name = "create-txn")]
+    CreateTxn {
+        event: create_event::Event,
+        hashdragon: String,
+        #[structopt(name="dest-address", long)]
+        destination_address:String,
+        #[structopt(name="change-address", long)]
+        change_address:String,
+
+        /// Flag to indicate whether to display script as hex.
+        #[structopt(name = "hex", long = "hex")]
+        hex: bool,
+        #[structopt(name = "cost", long, required_if("event", "dragonseed"))]
+        cost: Option<u64>,
+
+        /// Hash of the last hashdragon transaction
+        #[structopt(name="txn-ref", long)]
+        txn_ref: String,
+        #[structopt(name="coin-txn-ref", long)]
+        coin_txn_ref: String,
     }
 }
 
@@ -64,6 +85,13 @@ fn main() {
                 None => 0
             };
             create_event::create(event, hashdragon, cost_value, txn_ref, hex)
+        },
+        Command::CreateTxn { event, hashdragon, destination_address, change_address, cost, txn_ref, hex, coin_txn_ref } => {
+            let cost_value = match cost {
+                Some(c) => c,
+                None => 0
+            };
+            create_txn::create(event, hashdragon, destination_address, change_address, cost_value, txn_ref, hex, coin_txn_ref)
         }
     };
 }
