@@ -268,12 +268,12 @@ impl fmt::Display for WanderEvent {
 }
 
 
-struct RescueEvent {
-    hashdragon: String,
-    input_index: u32,
-    output_index: u32,
-    txn_ref: String,
-    hex: bool
+pub struct RescueEvent {
+    pub hashdragon: String,
+    pub input_index: u32,
+    pub output_index: u32,
+    pub txn_ref: String,
+    pub hex: bool
 }
 
 
