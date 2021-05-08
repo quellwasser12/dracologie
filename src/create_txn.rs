@@ -32,18 +32,28 @@ pub fn create(
     let change_addr = from_cashaddr_to_legacy(change_address.as_str());
     let legacy_change_addr = Address::from_str(change_addr.as_str()).unwrap();
 
-    let output = match event {
+    let output:Result<String, String> = match event {
         create_event::Event::Wander => create_wander_txn(hashdragon, txn_ref, coin_txn_ref, legacy_addr, legacy_change_addr),
         create_event::Event::Rescue => create_rescue_txn(hashdragon, txn_ref, coin_txn_ref, legacy_addr, legacy_change_addr),
-        _ => panic!("Unsupported Event: {:?}", event)
+        _ => Err(format!("Unsupported Event: {:?}", event))
     };
+    match output {
+        Ok(out) => print!("{}", out),
+        Err(e) => eprint!("{}", e)
+    }
 }
 
-fn create_wander_txn(hashdragon: String, txn_ref: String, coin_txn_ref: String, legacy_addr: Address, legacy_change_addr: Address) {
+fn create_wander_txn(
+    hashdragon: String,
+    txn_ref: String,
+    coin_txn_ref: String,
+    legacy_addr: Address,
+    legacy_change_addr: Address
+) -> Result<String, String> {
     let original_txn = block_on::<_>(crate::bch_api::get_transaction(txn_ref.as_str()));
     let my_coin = block_on::<_>(crate::bch_api::get_transaction(coin_txn_ref.as_str())).unwrap();
 
-    match original_txn {
+    let output = match original_txn {
         Ok(txn) => {
             let hex: String = txn.hex;
             let tx_bytes = Vec::from_hex(&hex).unwrap();
@@ -120,20 +130,28 @@ fn create_wander_txn(hashdragon: String, txn_ref: String, coin_txn_ref: String, 
                     output: vec![hashdragon_vout, new_owner_vout, change_vout]
                 };
 
-                print!("{}", hex::encode(serialize(&tx_wander)));
+                Ok(hex::encode(serialize(&tx_wander)))
             } else {
-                // Error, spec requires hashdragon OP_RETURN to be at vout 0.
+                Err("spec requires hashdragon OP_RETURN to be at vout 0.".to_owned())
             }
         },
-        Err(e) => panic!("Error retrieving original txn: {}", e)
-    }
+        Err(e) => Err(format!("Error retrieving original txn: {}", e))
+    };
+
+    return output;
 }
 
-fn create_rescue_txn(hashdragon: String, txn_ref: String, coin_txn_ref: String, legacy_addr: Address, legacy_change_addr: Address) {
+fn create_rescue_txn(
+    hashdragon: String,
+    txn_ref: String,
+    coin_txn_ref: String,
+    legacy_addr: Address,
+    legacy_change_addr: Address
+) -> Result<String, String> {
     let original_txn = block_on::<_>(crate::bch_api::get_transaction(txn_ref.as_str()));
     let my_coin = block_on::<_>(crate::bch_api::get_transaction(coin_txn_ref.as_str())).unwrap();
 
-    match original_txn {
+    let output = match original_txn {
         Ok(txn) => {
             let hex: String = txn.hex;
             let tx_bytes = Vec::from_hex(&hex).unwrap();
@@ -147,8 +165,6 @@ fn create_rescue_txn(hashdragon: String, txn_ref: String, coin_txn_ref: String, 
                 let instr = hashdragon_script.to_bytes();
                 assert_eq!(instr[0], 0x6a);
                 assert_eq!(u32::from_be_bytes(from_slice_to_four_u8(&instr[2..6])), LOKAD_ID);
-
-                let cmd = instr[5];
 
                 let rescue_event: String = RescueEvent {
                     hashdragon,
@@ -195,11 +211,13 @@ fn create_rescue_txn(hashdragon: String, txn_ref: String, coin_txn_ref: String, 
                     output: vec![hashdragon_vout, new_owner_vout, change_vout]
                 };
 
-                print!("{}", hex::encode(serialize(&tx_rescue)));
+                Ok(hex::encode(serialize(&tx_rescue)))
             } else {
-                // Error, spec requires hashdragon OP_RETURN to be at vout 0.
+                Err("spec requires hashdragon OP_RETURN to be at vout 0.".to_owned())
             }
         },
-        Err(e) => panic!("Error retrieving original txn: {}", e)
-    }
+        Err(e) => Err(format!("Error retrieving original txn: {}", e))
+    };
+
+    return output;
 }
